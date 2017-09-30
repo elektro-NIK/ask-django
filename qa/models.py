@@ -3,12 +3,11 @@ from django.contrib.auth.models import User
 
 
 class QuestionManager(models.Manager):
-
     def new(self):
-        self.order_by('-added_at')
+        return self.order_by('-id')
 
     def popular(self):
-        self.order_by('-rating')
+        return self.order_by('-rating')
 
 
 class Question(models.Model):
@@ -31,4 +30,4 @@ class Answer(models.Model):
     author = models.ForeignKey(User, on_delete=models.PROTECT)
 
     def __str__(self):
-         return self.text
+        return self.text

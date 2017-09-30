@@ -1,0 +1,34 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <h1>New questions</h1>
+    </head>
+    <body>
+        <ul>
+        {% for question in questions %}
+             <li>
+                 <a href="{{ questions.paginator.baseurl }}{{ question.id }}">{{ question.title }}</a>
+             </li>
+        {% endfor %}
+        </ul>
+        {% if questions.has_other_pages %}
+            {% if questions.has_previous %}
+                <a href="?page={{ questions.previous_page_number }}">&laquo;</a>
+            {% else %}
+                &laquo;
+            {% endif %}
+            {% for i in questions.paginator.page_range %}
+                {% if questions.number == i %}
+                    {{ i }}
+                {% else %}
+                    <a href="?page={{ i }}">{{ i }}</a>
+                {% endif %}
+            {% endfor %}
+            {% if questions.has_next %}
+                <a href="?page={{ questions.next_page_number }}">&raquo;</a>
+            {% else %}
+                &raquo;
+            {% endif %}
+        {% endif %}
+    </body>
+</html>
