@@ -1,14 +1,13 @@
+from django.contrib.auth import authenticate
+from django.contrib.auth import login as authlogin
+from django.contrib.auth.models import User
 from django.core.paginator import Paginator, PageNotAnInteger, EmptyPage
 from django.shortcuts import render, get_object_or_404
 from django.http import HttpResponse, HttpResponseRedirect
 from django.views.decorators.http import require_GET
 
-from qa.forms import AnswerForm, AskForm
+from qa.forms import AnswerForm, AskForm, LoginForm, RegisterForm
 from qa.models import Question, Answer
-
-
-def test(_):
-    return HttpResponse('OK')
 
 
 @require_GET
@@ -30,6 +29,7 @@ def index(request):
 def question_details(request, num):
     if request.method == 'POST':
         form = AnswerForm(request.POST)
+        form._user = request.user
         if form.is_valid():
             form.save()
             return HttpResponseRedirect(request.get_full_path())
@@ -46,7 +46,8 @@ def question_details(request, num):
             'text':    question.text,
             'answers': answers.all()[:],
             'form':    AnswerForm(initial={'question': num}),
-            'path':    request.get_full_path()
+            'path':    request.get_full_path(),
+            'user':    request.user
         })
 
 
@@ -69,6 +70,7 @@ def popular(request):
 def add_question(request):
     if request.method == 'POST':
         form = AskForm(request.POST)
+        form._user = request.user
         if form.is_valid():
             obj = form.save()
             return HttpResponseRedirect('/question/{}/'.format(obj.id))
@@ -79,4 +81,50 @@ def add_question(request):
             'title': 'New question',
             'form':  AskForm(),
             'path':  '/ask/',
+            'user':  request.user
+        })
+
+
+def login(request):
+    if request.method == 'POST':
+        form = LoginForm(request.POST)
+        if form.is_valid():
+            username = request.POST['username']
+            password = request.POST['password']
+            user = authenticate(request, username=username, password=password)
+            if user is not None:
+                authlogin(request, user)
+                return HttpResponseRedirect('/')
+        return render(request, 'login.html', {
+            'title': 'Login',
+            'form': form,
+            'path':  '/login/',
+        })
+    else:
+        return render(request, 'login.html', {
+            'title': 'Login',
+            'form':  LoginForm(),
+            'path':  '/login/',
+        })
+
+
+def signup(request):
+    if request.method == 'POST':
+        form = RegisterForm(request.POST)
+        if form.is_valid():
+            username = form.cleaned_data['username']
+            email = form.cleaned_data['email']
+            password = form.cleaned_data['password']
+            user = User.objects.create_user(username=username, email=email, password=password)
+            user.save()
+            user = authenticate(username=username, password=password)
+            if user is not None:
+                authlogin(request, user)
+                return HttpResponseRedirect('/')
+        return HttpResponse('OK')
+    else:
+        return render(request, 'register.html', {
+            'title': 'Signup',
+            'form':  RegisterForm(),
+            'path':  '/signup/',
         })
